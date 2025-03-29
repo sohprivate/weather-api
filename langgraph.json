@@ -1,4 +1,11 @@
 {
   "entrypoint": "graphs/weather_graph.py",
-  "graph": "build_weather_graph"
+  "graph": "build_weather_graph",
+  "dependencies": [
+    "langgraph",
+    "langchain",
+    "openai",
+    "python-dotenv",
+    "requests"
+  ]
 } 
