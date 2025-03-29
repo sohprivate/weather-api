@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "weather_api"
+version = "0.1"
+description = "Weather API using LangGraph"
+requires-python = ">=3.8"
+dependencies = [
+    "langgraph",
+    "langchain",
+    "langchain_openai",
+    "python-dotenv",
+    "requests"
+] 
