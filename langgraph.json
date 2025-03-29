@@ -9,5 +9,5 @@
     "python-dotenv",
     "requests"
   ],
-  "local_dependencies": ["/workspace/weather-api/graphs"]
+  "local_dependencies": ["./graphs"]
 } 
