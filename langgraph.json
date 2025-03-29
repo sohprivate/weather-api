@@ -1,6 +1,10 @@
 {
-  "entrypoint": "graphs/weather_graph.py",
-  "graph": "build_weather_graph",
+  "graphs": {
+    "weather": {
+      "entrypoint": "graphs/weather_graph.py",
+      "graph": "build_weather_graph"
+    }
+  },
   "dependencies": [
     "langgraph",
     "langchain",
