@@ -8,5 +8,6 @@
     "langchain_openai",
     "python-dotenv",
     "requests"
-  ]
+  ],
+  "local_dependencies": ["graphs"]
 } 
