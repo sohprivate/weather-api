@@ -9,5 +9,5 @@
     "python-dotenv",
     "requests"
   ],
-  "local_dependencies": ["graphs"]
+  "local_dependencies": []
 } 
