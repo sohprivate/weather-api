@@ -59,6 +59,8 @@ class WeatherState(TypedDict):
     logs: List[str]
     html_path: Optional[str]
     html_content: Optional[str]
+    reflection_result: Optional[Dict[str, Any]]
+    needs_retry: Optional[bool]
 
 # --- 各ステップの関数定義 ---
 def fetch_forecasts(state: WeatherState) -> WeatherState:
@@ -155,6 +157,21 @@ def decide(state: WeatherState) -> WeatherState:
         logs.append(f"[decide] エラー: {str(e)}")
         return {**state, "error": str(e), "logs": state.get("logs", []) + logs}
 
+def reflect_node(state: WeatherState) -> WeatherState:
+    logs = state.get("logs", []) + ["[reflect] 精度を自己評価中..."]
+    try:
+        score = state.get("comparison", {})
+        avg_score = sum(
+            sum(agent["score"] for agent in location.values() if agent.get("score") is not None)
+            for location in score.values()
+        ) / max(len(score), 1)
+        needs_retry = avg_score > 20
+        logs.append(f"[reflect] 平均スコア: {avg_score:.2f} → 再試行: {needs_retry}")
+        return {**state, "logs": logs, "reflection_result": {"avg_score": avg_score}, "needs_retry": needs_retry}
+    except Exception as e:
+        logs.append(f"[reflect] エラー: {str(e)}")
+        return {**state, "error": str(e), "logs": logs}
+
 # --- LangGraphの定義 ---
 def build_weather_graph() -> StateGraph:
     graph = StateGraph(WeatherState)
@@ -164,6 +181,7 @@ def build_weather_graph() -> StateGraph:
     graph.add_node("decider_llm", decider_node)
     graph.add_node("analyze", analyze_with_ai)
     graph.add_node("decide", decide)
+    graph.add_node("reflect", reflect_node)
     graph.add_node("visualizer", visualizer_agent)
 
     graph.set_entry_point("fetch")
@@ -172,7 +190,12 @@ def build_weather_graph() -> StateGraph:
     graph.add_edge("comparator", "decider_llm")
     graph.add_edge("decider_llm", "analyze")
     graph.add_edge("analyze", "decide")
-    graph.add_edge("decide", "visualizer")
+    graph.add_edge("decide", "reflect")
+
+    def route_after_reflection(state: WeatherState):
+        return "fetch" if state.get("needs_retry") else "visualizer"
+
+    graph.add_conditional_edges("reflect", route_after_reflection)
     graph.add_edge("visualizer", END)
 
     return graph.compile()
