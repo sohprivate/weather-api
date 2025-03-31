@@ -1,55 +1,44 @@
-from typing import Dict, Union, Optional
+import math
 
-def normalize_forecast(forecast: Dict[str, Union[str, float, int, None]]) -> Dict[str, Optional[Union[str, float, int]]]:
+def normalize(raw: dict) -> dict:
     """
-    各エージェントの天気予報データを共通形式に整える。
+    各天気APIの出力を統一フォーマットに変換する。
 
-    Args:
-        forecast (dict): エージェントからの生データ
-            {
-                "source": str,
-                "max_temp": float|None,
-                "min_temp": float|None,
-                "pop": int|None,
-                "description": str|None
-            }
+    Input:
+    {
+        "source": "WeatherAPI",
+        "max_temp": 13.3,
+        "min_temp": 7.7,
+        "pop": 88,
+        "description": "雨が降るでしょう"
+    }
 
-    Returns:
-        dict: 正規化されたデータ（全ソース共通構造）
-            {
-                "source": str,
-                "max_temp": float|None,  # 小数点1位まで
-                "min_temp": float|None,  # 小数点1位まで
-                "pop": int|None,         # 0-100の整数値
-                "description": str|None  # 概況文
-            }
+    Output:
+    {
+        "source": "WeatherAPI",
+        "max_temp": float or None,
+        "min_temp": float or None,
+        "pop": int or None,
+        "description": str or None
+    }
     """
-    def round_or_none(val: Union[float, int, str, None]) -> Optional[float]:
-        """数値を小数点1位まで丸める。非数値やNoneの場合はNoneを返す"""
-        if val is None:
-            return None
+    def to_float(value):
         try:
-            return round(float(val), 1)
-        except (ValueError, TypeError):
+            val = float(value)
+            return None if math.isnan(val) else val
+        except (TypeError, ValueError):
             return None
 
-    def normalize_pop(val: Union[float, int, str, None]) -> Optional[int]:
-        """降水確率を0-100の整数値に正規化。変換できない場合はNone"""
-        if val is None:
-            return None
+    def to_int(value):
         try:
-            pop = float(val)
-            # 0-1の確率を%に変換
-            if 0 <= pop <= 1:
-                pop *= 100
-            return int(round(pop))
-        except (ValueError, TypeError):
+            return int(value)
+        except (TypeError, ValueError):
             return None
 
     return {
-        "source": str(forecast.get("source", "Unknown")),
-        "max_temp": round_or_none(forecast.get("max_temp")),
-        "min_temp": round_or_none(forecast.get("min_temp")),
-        "pop": normalize_pop(forecast.get("pop")),
-        "description": forecast.get("description")
+        "source": raw.get("source"),
+        "max_temp": to_float(raw.get("max_temp")),
+        "min_temp": to_float(raw.get("min_temp")),
+        "pop": to_int(raw.get("pop")),
+        "description": raw.get("description") if isinstance(raw.get("description"), str) else None,
     }

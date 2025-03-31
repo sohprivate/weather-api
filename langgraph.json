@@ -5,9 +5,9 @@
   "dependencies": [
     "langgraph",
     "langchain",
-    "langchain_openai",
+    "langchain_aws",
     "python-dotenv",
     "requests"
   ],
   "local_dependencies": []
-} 
+}

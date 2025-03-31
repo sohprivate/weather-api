@@ -1,10 +1,19 @@
 from typing import List, Dict
 import statistics
+import logging
+
+logger = logging.getLogger(__name__)
 
 def calculate_deviation(value, reference):
-    if value is None:
+    if value is None or reference is None:
         return None
     return abs(value - reference)
+
+def safe_median(values, label):
+    if not values:
+        logger.warning(f"[compare_forecasts] '{label}' の中央値を計算できません（空データ）")
+        return None
+    return statistics.median(values)
 
 def compare_forecasts(forecasts: List[Dict]) -> Dict[str, Dict]:
     """
@@ -21,10 +30,10 @@ def compare_forecasts(forecasts: List[Dict]) -> Dict[str, Dict]:
     min_temps = [f["min_temp"] for f in forecasts if f["min_temp"] is not None]
     pops = [f["pop"] for f in forecasts if f["pop"] is not None]
 
-    # 中央値を基準に
-    ref_max = statistics.median(max_temps)
-    ref_min = statistics.median(min_temps)
-    ref_pop = statistics.median(pops)
+    # 中央値を基準に（空のときは None）
+    ref_max = safe_median(max_temps, "max_temp")
+    ref_min = safe_median(min_temps, "min_temp")
+    ref_pop = safe_median(pops, "pop")
 
     results = {}
     for f in forecasts:
@@ -33,7 +42,7 @@ def compare_forecasts(forecasts: List[Dict]) -> Dict[str, Dict]:
         dev_min = calculate_deviation(f["min_temp"], ref_min)
         dev_pop = calculate_deviation(f["pop"], ref_pop)
 
-        # None の場合は0として加算しない
+        # None の場合はスコア計算に含めない
         total_score = sum(d for d in [dev_max, dev_min, dev_pop] if d is not None)
 
         results[source] = {
